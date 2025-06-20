@@ -1,17 +1,23 @@
->**Note**: Please **fork** the current Udacity repository so that you will have a **remote** repository in **your** Github account. Clone the remote repository to your local machine. Later, as a part of the project "Post your Work on Github", you will push your proposed changes to the remote repository in your Github account.
+# Bikeshare Project – Refactoring Branch
 
-### Date created
-Include the date you created this project and README file.
+This branch focuses on **refactoring** the `bikeshare.py` code to improve readability, performance, and maintainability without changing its core functionality.
 
-### Project Title
-Replace the Project Title
+## 🔧 Refactoring Goals
 
-### Description
-Describe what your project is about and what it does
+- Improve code structure and readability
+- Remove redundant or repeated logic
+- Use meaningful variable and function names
+- Enhance performance where possible
+- Maintain existing functionality and behavior
 
-### Files used
-Include the files used
+## ✨ Changes Made
 
-### Credits
-It's important to give proper credit. Add links to any repo that inspired you or blogposts you consulted.
+- Cleaned up repeated code blocks
+- Organized functions more logically
+- Added in-line comments where needed
+- Improved error handling
+- Used list comprehensions and efficient loops
+
+## 📁 File Structure
+
 
