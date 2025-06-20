@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Bikeshare Data Analysis
 
 This project allows you to explore US bikeshare data for three major cities: Chicago, New York City, and Washington. The script provides statistics and insights based on user-specified filters such as city, month, and day of the week.
