@@ -1,95 +1,99 @@
 import time
 import pandas as pd
 
+# Constants
 CITY_DATA = {'chicago': 'chicago.csv', 'new york city': 'new_york_city.csv', 'washington': 'washington.csv'}
+MONTHS = ['january', 'february', 'march', 'april', 'may', 'june']
+DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+MONTHS_TO_NAME = {i + 1: month.capitalize() for i, month in enumerate(MONTHS)}
+
+def get_valid_input(prompt, valid_options, empty_message="Input cannot be empty."):
+    """Prompt user for input and validate against valid options."""
+    while True:
+        user_input = input(prompt).lower().strip()
+        if not user_input:
+            print(empty_message)
+            continue
+        if user_input in valid_options:
+            return user_input
+        print(f"Please enter one of: {', '.join(valid_options)}.")
+
+def print_section_header(title):
+    """Print a standardized section header."""
+    print(f"\n=== {title} ===\n")
 
 def get_filters():
+    """Get user input for city, month, and day filters."""
     print("Hello! Let's explore some US bikeshare data!")
-    city = ""
-    while city not in CITY_DATA:
-        city = input("Enter city (Chicago, New York City, Washington): ").lower().strip()
-        if city not in CITY_DATA:
-            print("Please enter Chicago, New York City, or Washington.")
-        if not city:
-            print("City cannot be empty.")
-    months = ['all', 'january', 'february', 'march', 'april', 'may', 'june']
-    month = ""
-    while month not in months:
-        month = input("Enter month (all, January, February, ..., June): ").lower().strip()
-        if month not in months:
-            print("Please enter all or a month from January to June.")
-        if not month:
-            print("Month cannot be empty.")
-    days = ['all', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    day = ""
-    while day not in days:
-        day = input("Enter day of week (all, Monday, Tuesday, ..., Sunday): ").lower().strip()
-        if day not in days:
-            print("Please enter all or a day of the week.")
-        if not day:
-            print("Day cannot be empty.")
+    cities = list(CITY_DATA.keys())
+    city = get_valid_input("Enter city (Chicago, New York City, Washington): ", cities)
+    valid_months = ['all'] + MONTHS
+    month = get_valid_input("Enter month (all, January, February, ..., June): ", valid_months)
+    valid_days = ['all'] + DAYS
+    day = get_valid_input("Enter day of week (all, Monday, Tuesday, ..., Sunday): ", valid_days)
     print("-" * 40)
     return city, month, day
 
 def load_data(city, month, day):
-
-    filename = CITY_DATA[city]
-    df = pd.read_csv(filename)
-    df['Start Time'] = pd.to_datetime(df['Start Time'])
-    df['month'] = df['Start Time'].dt.month
-    df['day_of_week'] = df['Start Time'].dt.day_name()
-    if month != 'all':
-        months = ['january', 'february', 'march', 'april', 'may', 'june']
-        month_number = months.index(month) + 1
-        df = df[df['month'] == month_number]
-    if day != 'all':
-        df = df[df['day_of_week'] == day.title()]
-    return df
+    """Load and filter bikeshare data based on city, month, and day."""
+    try:
+        df = pd.read_csv(CITY_DATA[city])
+        df['Start Time'] = pd.to_datetime(df['Start Time'])
+        if month != 'all' or day != 'all':
+            df['month'] = df['Start Time'].dt.month
+            df['day_of_week'] = df['Start Time'].dt.day_name()
+            if month != 'all':
+                month_number = MONTHS.index(month) + 1
+                df = df[df['month'] == month_number]
+            if day != 'all':
+                df = df[df['day_of_week'] == day.title()]
+        return df
+    except FileNotFoundError:
+        print(f"Error: Data file for {city} not found.")
+    except Exception as e:
+        print(f"Error loading data for {city}: {str(e)}")
+    return None
 
 def time_stats(df):
-
-    print("\nCalculating The Most Frequent Times of Travel...\n")
+    """Display statistics on the most frequent times of travel."""
+    print_section_header("Most Frequent Times of Travel")
     start_time = time.time()
-    months = ['January', 'February', 'March', 'April', 'May', 'June']
-    month_number = df['month'].mode()[0]
-    most_common_month = months[month_number - 1]
+    most_common_month = MONTHS_TO_NAME[df['month'].mode()[0]]
     print(f"Most common month: {most_common_month}")
     most_common_day = df['day_of_week'].mode()[0]
-    print(f"Most common day of week: {most_common_day}")
-    df['hour'] = df['Start Time'].dt.hour
-    most_common_hour = df['hour'].mode()[0]
+    print(f"Most common day: {most_common_day}")
+    most_common_hour = df['Start Time'].dt.hour.mode()[0]
     print(f"Most common start hour: {most_common_hour}")
-    print(f"\nThis took {time.time() - start_time} seconds.")
+    print(f"Calculation took {time.time() - start_time:.3f} seconds.")
     print("-" * 40)
 
 def station_stats(df):
-
-    print("\nCalculating The Most Popular Stations and Trip...\n")
+    """Display statistics on the most popular stations and trip."""
+    print_section_header("Popular Stations and Trip")
     start_time = time.time()
     most_common_start = df['Start Station'].mode()[0]
     print(f"Most common start station: {most_common_start}")
     most_common_end = df['End Station'].mode()[0]
     print(f"Most common end station: {most_common_end}")
-    df['trip'] = df['Start Station'] + " to " + df['End Station']
-    most_common_trip = df['trip'].mode()[0]
-    print(f"Most common trip: {most_common_trip}")
-    print(f"\nThis took {time.time() - start_time} seconds.")
+    most_common_trip = df.groupby(['Start Station', 'End Station']).size().idxmax()
+    print(f"Most common trip: {most_common_trip[0]} to {most_common_trip[1]}")
+    print(f"Calculation took {time.time() - start_time:.3f} seconds.")
     print("-" * 40)
 
 def trip_duration_stats(df):
-
-    print("\nCalculating Trip Duration...\n")
+    """Display statistics on trip duration."""
+    print_section_header("Trip Duration")
     start_time = time.time()
     total_travel_time = df['Trip Duration'].sum()
     print(f"Total travel time: {total_travel_time} seconds")
     mean_travel_time = df['Trip Duration'].mean()
-    print(f"Mean travel time: {mean_travel_time} seconds")
-    print(f"\nThis took {time.time() - start_time} seconds.")
+    print(f"Mean travel time: {mean_travel_time:.2f} seconds")
+    print(f"Calculation took {time.time() - start_time:.3f} seconds.")
     print("-" * 40)
 
 def user_stats(df):
-
-    print("\nCalculating User Stats...\n")
+    """Display statistics on user types, gender, and birth year."""
+    print_section_header("User Statistics")
     start_time = time.time()
     user_types = df['User Type'].value_counts()
     print("User Type Counts:")
@@ -109,43 +113,44 @@ def user_stats(df):
         print(f"Most common birth year: {most_common_birth}")
     else:
         print("\nBirth year data not available for this city.")
-    print(f"\nThis took {time.time() - start_time} seconds.")
+    print(f"Calculation took {time.time() - start_time:.3f} seconds.")
     print("-" * 40)
 
 def display_raw_data(df):
-
+    """Display raw data in pages of 5 rows with forward/backward navigation."""
     if df.empty:
         print("No data available to display.")
         return
     row_index = 0
+    page_size = 5
     while True:
-        show_data = input("\nWould you like to see 5 rows of raw data? Enter yes or no: ").lower().strip()
-        if show_data == 'yes':
+        prompt = "\nShow raw data? Enter 'next' (next 5 rows), 'prev' (previous 5 rows), or 'no' (exit): "
+        action = get_valid_input(prompt, ['next', 'prev', 'no'], "Please enter 'next', 'prev', or 'no'.")
+        if action == 'no':
+            break
+        elif action == 'next':
             if row_index >= len(df):
                 print("No more data to display.")
-                break
-            print(df.iloc[row_index:row_index + 5])
-            row_index = row_index + 5
-        elif show_data == 'no':
-            break
-        else:
-            print("Please enter yes or no.")
+                continue
+            print(df.iloc[row_index:row_index + page_size])
+            row_index += page_size
+        elif action == 'prev':
+            row_index = max(0, row_index - page_size)
+            print(df.iloc[row_index:row_index + page_size])
 
 def main():
-
+    """Main function to run the bikeshare data analysis."""
     while True:
         city, month, day = get_filters()
         df = load_data(city, month, day)
-        if df is None or df.empty:
-            print("No data available. Please try again.")
+        if df is None:
             continue
         time_stats(df)
         station_stats(df)
         trip_duration_stats(df)
         user_stats(df)
         display_raw_data(df)
-        restart = input("\nWould you like to restart? Enter yes or no: ").lower().strip()
-        if restart != 'yes':
+        if get_valid_input("\nWould you like to restart? Enter yes or no: ", ['yes', 'no']) != 'yes':
             break
 
 if __name__ == "__main__":
